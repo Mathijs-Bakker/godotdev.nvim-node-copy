@@ -30,6 +30,7 @@ Then enable the plugin in:
 Select a node in the Scene dock, then use either:
 
 - the Scene Tree right-click menu
+- the 2D editor right-click menu
 - or the `Project > Tools` menu
 
 Available actions:

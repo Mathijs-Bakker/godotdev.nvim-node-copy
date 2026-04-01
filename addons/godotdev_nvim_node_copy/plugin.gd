@@ -13,6 +13,7 @@ const CONTEXT_ID_COPY_GET_NODE := 1003
 const CONTEXT_ID_COPY_ONREADY_VAR := 1004
 
 var _scene_tree_context_menu := SceneTreeContextMenuPlugin.new(self)
+var _canvas_item_context_menu := CanvasItemContextMenuPlugin.new(self)
 
 
 func _enter_tree() -> void:
@@ -21,6 +22,7 @@ func _enter_tree() -> void:
 	add_tool_menu_item(MENU_COPY_GET_NODE, _copy_get_node_reference)
 	add_tool_menu_item(MENU_COPY_ONREADY_VAR, _copy_onready_var)
 	add_context_menu_plugin(EditorContextMenuPlugin.CONTEXT_SLOT_SCENE_TREE, _scene_tree_context_menu)
+	add_context_menu_plugin(EditorContextMenuPlugin.CONTEXT_SLOT_2D_EDITOR, _canvas_item_context_menu)
 
 
 func _exit_tree() -> void:
@@ -29,6 +31,7 @@ func _exit_tree() -> void:
 	remove_tool_menu_item(MENU_COPY_GET_NODE)
 	remove_tool_menu_item(MENU_COPY_ONREADY_VAR)
 	remove_context_menu_plugin(_scene_tree_context_menu)
+	remove_context_menu_plugin(_canvas_item_context_menu)
 
 
 func _copy_node_path() -> void:
@@ -193,3 +196,60 @@ class SceneTreeContextMenuPlugin extends EditorContextMenuPlugin:
 		(_plugin as EditorPlugin)._copy_for_node(node, func(selected: Node) -> String:
 			return (_plugin as EditorPlugin)._onready_var_snippet(selected)
 		)
+
+
+class CanvasItemContextMenuPlugin extends EditorContextMenuPlugin:
+	var _plugin: EditorPlugin
+
+
+	func _init(plugin: EditorPlugin) -> void:
+		_plugin = plugin
+
+
+	func _popup_menu(paths: PackedStringArray) -> void:
+		if paths.is_empty():
+			return
+
+		add_context_menu_item(MENU_COPY_NODE_PATH, _copy_node_path_context, MENU_ICON)
+		add_context_menu_item(MENU_COPY_DOLLAR_REFERENCE, _copy_dollar_reference_context, MENU_ICON)
+		add_context_menu_item(MENU_COPY_GET_NODE, _copy_get_node_reference_context, MENU_ICON)
+		add_context_menu_item(MENU_COPY_ONREADY_VAR, _copy_onready_var_context, MENU_ICON)
+
+
+	func _copy_node_path_context(selection: Array) -> void:
+		var node: Node = _node_from_selection(selection)
+		(_plugin as EditorPlugin)._copy_for_node(node, func(selected: Node) -> String:
+			return (_plugin as EditorPlugin)._relative_node_path(selected)
+		)
+
+
+	func _copy_dollar_reference_context(selection: Array) -> void:
+		var node: Node = _node_from_selection(selection)
+		(_plugin as EditorPlugin)._copy_for_node(node, func(selected: Node) -> String:
+			return (_plugin as EditorPlugin)._dollar_reference(selected)
+		)
+
+
+	func _copy_get_node_reference_context(selection: Array) -> void:
+		var node: Node = _node_from_selection(selection)
+		(_plugin as EditorPlugin)._copy_for_node(node, func(selected: Node) -> String:
+			return (_plugin as EditorPlugin)._get_node_reference(selected)
+		)
+
+
+	func _copy_onready_var_context(selection: Array) -> void:
+		var node: Node = _node_from_selection(selection)
+		(_plugin as EditorPlugin)._copy_for_node(node, func(selected: Node) -> String:
+			return (_plugin as EditorPlugin)._onready_var_snippet(selected)
+		)
+
+
+	func _node_from_selection(selection: Array) -> Node:
+		if selection.is_empty():
+			return null
+
+		if selection[0] is Node:
+			return selection[0] as Node
+
+		push_warning("godotdev.nvim-node-copy: 2D context menu selection did not resolve to a node")
+		return null
