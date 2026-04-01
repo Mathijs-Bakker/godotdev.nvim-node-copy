@@ -5,6 +5,7 @@ const MENU_COPY_NODE_PATH := "godotdev.nvim: Copy Node Path"
 const MENU_COPY_DOLLAR_REFERENCE := "godotdev.nvim: Copy $ Reference"
 const MENU_COPY_GET_NODE := "godotdev.nvim: Copy get_node()"
 const MENU_COPY_ONREADY_VAR := "godotdev.nvim: Copy @onready Var"
+const MENU_ICON := preload("res://addons/godotdev_nvim_node_copy/assets/godotdev_nvim_icon.svg")
 
 const CONTEXT_ID_COPY_NODE_PATH := 1001
 const CONTEXT_ID_COPY_DOLLAR_REFERENCE := 1002
@@ -160,10 +161,10 @@ class SceneTreeContextMenuPlugin extends EditorContextMenuPlugin:
 		if paths.is_empty():
 			return
 
-		add_context_menu_item(MENU_COPY_NODE_PATH, _copy_node_path_context)
-		add_context_menu_item(MENU_COPY_DOLLAR_REFERENCE, _copy_dollar_reference_context)
-		add_context_menu_item(MENU_COPY_GET_NODE, _copy_get_node_reference_context)
-		add_context_menu_item(MENU_COPY_ONREADY_VAR, _copy_onready_var_context)
+		add_context_menu_item(MENU_COPY_NODE_PATH, _copy_node_path_context, MENU_ICON)
+		add_context_menu_item(MENU_COPY_DOLLAR_REFERENCE, _copy_dollar_reference_context, MENU_ICON)
+		add_context_menu_item(MENU_COPY_GET_NODE, _copy_get_node_reference_context, MENU_ICON)
+		add_context_menu_item(MENU_COPY_ONREADY_VAR, _copy_onready_var_context, MENU_ICON)
 
 
 	func _copy_node_path_context(_selection: Array) -> void:
