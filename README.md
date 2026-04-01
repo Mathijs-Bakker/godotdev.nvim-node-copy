@@ -82,6 +82,12 @@ get_node("Player")
 - If the selected node is the scene root itself, the generated snippets use `self` where appropriate.
 - The addon currently targets GDScript snippets first.
 
+## Icon Import
+
+- Commit the SVG `.import` file for the addon icon so users get consistent editor import settings.
+- The icon is intended to use `editor/scale_with_editor_scale=true` for proper HiDPI behavior.
+- The current icon import keeps fixed colors with `editor/convert_colors_with_editor_theme=false`.
+
 ## Roadmap
 
 - Support `%UniqueNode` when appropriate
