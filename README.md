@@ -12,7 +12,9 @@
 ![License](https://img.shields.io/github/license/Mathijs-Bakker/godotdev.nvim-node-copy)
 ![Release](https://img.shields.io/github/v/release/Mathijs-Bakker/godotdev.nvim-node-copy)
 
-</div># godotdev.nvim-node-copy
+</div>
+
+# godotdev.nvim-node-copy
 
 `godotdev.nvim-node-copy` is a small Godot editor addon for users of [`godotdev.nvim`](https://github.com/Mathijs-Bakker/godotdev.nvim).
 
