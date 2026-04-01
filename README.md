@@ -1,49 +1,95 @@
-# godotdev.nvim-node-copy
+<div align="left">
 
-godotdev.nvim-node-copy is a small Godot editor addon that helps when using godotdev.nvim as your external editor.
+  [![BuyMeACoffee](https://raw.githubusercontent.com/pachadotdev/buymeacoffee-badges/main/bmc-yellow.svg)](https://buymeacoffee.com/mathijs.bakker)
 
-It adds simple copy actions for selected nodes so you can paste useful references directly into Neovim without relying on drag-and-drop or custom IPC.
+</div>
+<div align="center"><img src="assets/godotdev-nvim-logo.svg" width="300"></div>
 
-The addon is designed to keep the workflow explicit and safe:
-select a node in Godot, copy the reference you want, then paste it at the cursor in Neovim.
+<div align="center">
 
-## Initial Feature List
+[![BuyMeACoffee](https://raw.githubusercontent.com/pachadotdev/buymeacoffee-badges/main/bmc-donate-yellow.svg)](https://buymeacoffee.com/mathijs.bakker)
+![Godot](https://img.shields.io/badge/Godot-4.0%2B-blue?logo=godot-engine)
+![License](https://img.shields.io/github/license/Mathijs-Bakker/godotdev.nvim-node-copy)
+![Release](https://img.shields.io/github/v/release/Mathijs-Bakker/godotdev.nvim-node-copy)
 
-- Copy node path as Node/Child
-- Copy scene path as $Node/Child
-- Copy get_node("Node/Child")
-- Copy typed @onready var snippet
-- Copy inferred variable name from node name
-- Work from the selected node in the SceneTree
-- GDScript-first output
-- No Neovim-side receiver required
-- Clipboard-based workflow only
+</div># godotdev.nvim-node-copy
 
-## Good MVP Scope
+`godotdev.nvim-node-copy` is a small Godot editor addon for users of [`godotdev.nvim`](https://github.com/Mathijs-Bakker/godotdev.nvim).
 
-Start with 3 actions:
+It adds copy actions for the currently selected node so you can paste useful references directly into Neovim without relying on drag-and-drop or custom IPC.
 
-- Copy Node Path
-- Copy $Node Reference
-- Copy @onready Var
+## Features
 
-Example output:
+- Copy the selected node path relative to the current scene root
+- Copy a `$Node/Child` reference
+- Copy a `get_node("Node/Child")` expression
+- Copy a typed `@onready var` snippet
+- Works from the current editor selection
+- Clipboard-only workflow; no Neovim-side receiver required
 
+## Install
+
+Copy the `addons/godotdev_nvim_node_copy` folder into your Godot project:
+
+```text
+res://addons/godotdev_nvim_node_copy
+```
+
+Then enable the plugin in:
+
+`Project > Project Settings > Plugins`
+
+## Usage
+
+Select a node in the Scene dock, then use either:
+
+- the Scene Tree right-click menu
+- the 2D editor right-click menu
+- or the `Project > Tools` menu
+
+Available actions:
+
+- `Project > Tools > godotdev.nvim: Copy Node Path`
+- `Project > Tools > godotdev.nvim: Copy $ Reference`
+- `Project > Tools > godotdev.nvim: Copy get_node()`
+- `Project > Tools > godotdev.nvim: Copy @onready Var`
+
+The generated text is copied to your clipboard. Paste it in Neovim where you want it.
+
+## Example Output
+
+For a selected `Player` node:
+
+```gdscript
+Player
+```
+
+```gdscript
 $Player
+```
 
+```gdscript
 get_node("Player")
+```
 
+```gdscript
 @onready var player: CharacterBody2D = $Player
+```
 
-Nice Follow-up Features
+## Notes
 
-- Support relative path vs absolute-from-scene-root path
-- Support %UniqueNode when applicable
-- Handle name sanitization for variable names
-- Add C# snippet variants later
-- Let users choose snippet style in addon settings
+- The addon uses the selected node relative to the currently edited scene root.
+- If the selected node is the scene root itself, the generated snippets use `self` where appropriate.
+- The addon currently targets GDScript snippets first.
 
+## Icon Import
 
-  - a concise README.md
-  - the addon folder structure
-  - the initial Godot plugin command names
+- Commit the SVG `.import` file for the addon icon so users get consistent editor import settings.
+- The icon is intended to use `editor/scale_with_editor_scale=true` for proper HiDPI behavior.
+- The current icon import keeps fixed colors with `editor/convert_colors_with_editor_theme=false`.
+
+## Roadmap
+
+- Support `%UniqueNode` when appropriate
+- Add C# snippet variants
+- Let users choose snippet style in plugin settings
