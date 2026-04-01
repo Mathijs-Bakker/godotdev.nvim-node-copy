@@ -1,4 +1,18 @@
-# godotdev.nvim-node-copy
+<div align="left">
+
+  [![BuyMeACoffee](https://raw.githubusercontent.com/pachadotdev/buymeacoffee-badges/main/bmc-yellow.svg)](https://buymeacoffee.com/mathijs.bakker)
+
+</div>
+<div align="center"><img src="assets/godotdev-nvim-logo.svg" width="300"></div>
+
+<div align="center">
+
+[![BuyMeACoffee](https://raw.githubusercontent.com/pachadotdev/buymeacoffee-badges/main/bmc-donate-yellow.svg)](https://buymeacoffee.com/mathijs.bakker)
+![Godot](https://img.shields.io/badge/Godot-4.0%2B-blue?logo=godot-engine)
+![License](https://img.shields.io/github/license/Mathijs-Bakker/godotdev.nvim-node-copy)
+![Release](https://img.shields.io/github/v/release/Mathijs-Bakker/godotdev.nvim-node-copy)
+
+</div># godotdev.nvim-node-copy
 
 `godotdev.nvim-node-copy` is a small Godot editor addon for users of [`godotdev.nvim`](https://github.com/Mathijs-Bakker/godotdev.nvim).
 
