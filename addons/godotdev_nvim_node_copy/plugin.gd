@@ -6,12 +6,20 @@ const MENU_COPY_DOLLAR_REFERENCE := "godotdev.nvim: Copy $ Reference"
 const MENU_COPY_GET_NODE := "godotdev.nvim: Copy get_node()"
 const MENU_COPY_ONREADY_VAR := "godotdev.nvim: Copy @onready Var"
 
+const CONTEXT_ID_COPY_NODE_PATH := 1001
+const CONTEXT_ID_COPY_DOLLAR_REFERENCE := 1002
+const CONTEXT_ID_COPY_GET_NODE := 1003
+const CONTEXT_ID_COPY_ONREADY_VAR := 1004
+
+var _scene_tree_context_menu := SceneTreeContextMenuPlugin.new(self)
+
 
 func _enter_tree() -> void:
 	add_tool_menu_item(MENU_COPY_NODE_PATH, _copy_node_path)
 	add_tool_menu_item(MENU_COPY_DOLLAR_REFERENCE, _copy_dollar_reference)
 	add_tool_menu_item(MENU_COPY_GET_NODE, _copy_get_node_reference)
 	add_tool_menu_item(MENU_COPY_ONREADY_VAR, _copy_onready_var)
+	add_context_menu_plugin(EditorContextMenuPlugin.CONTEXT_SLOT_SCENE_TREE, _scene_tree_context_menu)
 
 
 func _exit_tree() -> void:
@@ -19,38 +27,46 @@ func _exit_tree() -> void:
 	remove_tool_menu_item(MENU_COPY_DOLLAR_REFERENCE)
 	remove_tool_menu_item(MENU_COPY_GET_NODE)
 	remove_tool_menu_item(MENU_COPY_ONREADY_VAR)
+	remove_context_menu_plugin(_scene_tree_context_menu)
 
 
 func _copy_node_path() -> void:
-	var selected := _get_selected_node()
-	if selected == null:
-		return
-
-	_copy_to_clipboard(_relative_node_path(selected))
+	_copy_for_selected_node(func(selected: Node) -> String:
+		return _relative_node_path(selected)
+	)
 
 
 func _copy_dollar_reference() -> void:
-	var selected := _get_selected_node()
-	if selected == null:
-		return
-
-	_copy_to_clipboard(_dollar_reference(selected))
+	_copy_for_selected_node(func(selected: Node) -> String:
+		return _dollar_reference(selected)
+	)
 
 
 func _copy_get_node_reference() -> void:
-	var selected := _get_selected_node()
-	if selected == null:
-		return
-
-	_copy_to_clipboard(_get_node_reference(selected))
+	_copy_for_selected_node(func(selected: Node) -> String:
+		return _get_node_reference(selected)
+	)
 
 
 func _copy_onready_var() -> void:
+	_copy_for_selected_node(func(selected: Node) -> String:
+		return _onready_var_snippet(selected)
+	)
+
+
+func _copy_for_selected_node(renderer: Callable) -> void:
 	var selected := _get_selected_node()
 	if selected == null:
 		return
 
-	_copy_to_clipboard(_onready_var_snippet(selected))
+	_copy_to_clipboard(renderer.call(selected))
+
+
+func _copy_for_node(node: Node, renderer: Callable) -> void:
+	if node == null:
+		return
+
+	_copy_to_clipboard(renderer.call(node))
 
 
 func _get_selected_node() -> Node:
@@ -130,3 +146,49 @@ func _starts_with_ascii_digit(value: String) -> bool:
 func _copy_to_clipboard(text: String) -> void:
 	DisplayServer.clipboard_set(text)
 	print("godotdev.nvim-node-copy: copied `%s`" % text)
+
+
+class SceneTreeContextMenuPlugin extends EditorContextMenuPlugin:
+	var _plugin: EditorPlugin
+
+
+	func _init(plugin: EditorPlugin) -> void:
+		_plugin = plugin
+
+
+	func _popup_menu(paths: PackedStringArray) -> void:
+		if paths.is_empty():
+			return
+
+		add_context_menu_item(MENU_COPY_NODE_PATH, _copy_node_path_context)
+		add_context_menu_item(MENU_COPY_DOLLAR_REFERENCE, _copy_dollar_reference_context)
+		add_context_menu_item(MENU_COPY_GET_NODE, _copy_get_node_reference_context)
+		add_context_menu_item(MENU_COPY_ONREADY_VAR, _copy_onready_var_context)
+
+
+	func _copy_node_path_context(_selection: Array) -> void:
+		var node: Node = (_plugin as EditorPlugin)._get_selected_node()
+		(_plugin as EditorPlugin)._copy_for_node(node, func(selected: Node) -> String:
+			return (_plugin as EditorPlugin)._relative_node_path(selected)
+		)
+
+
+	func _copy_dollar_reference_context(_selection: Array) -> void:
+		var node: Node = (_plugin as EditorPlugin)._get_selected_node()
+		(_plugin as EditorPlugin)._copy_for_node(node, func(selected: Node) -> String:
+			return (_plugin as EditorPlugin)._dollar_reference(selected)
+		)
+
+
+	func _copy_get_node_reference_context(_selection: Array) -> void:
+		var node: Node = (_plugin as EditorPlugin)._get_selected_node()
+		(_plugin as EditorPlugin)._copy_for_node(node, func(selected: Node) -> String:
+			return (_plugin as EditorPlugin)._get_node_reference(selected)
+		)
+
+
+	func _copy_onready_var_context(_selection: Array) -> void:
+		var node: Node = (_plugin as EditorPlugin)._get_selected_node()
+		(_plugin as EditorPlugin)._copy_for_node(node, func(selected: Node) -> String:
+			return (_plugin as EditorPlugin)._onready_var_snippet(selected)
+		)

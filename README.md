@@ -27,7 +27,12 @@ Then enable the plugin in:
 
 ## Usage
 
-Select a node in the Scene dock, then use one of these menu items:
+Select a node in the Scene dock, then use either:
+
+- the Scene Tree right-click menu
+- or the `Project > Tools` menu
+
+Available actions:
 
 - `Project > Tools > godotdev.nvim: Copy Node Path`
 - `Project > Tools > godotdev.nvim: Copy $ Reference`
@@ -67,4 +72,3 @@ get_node("Player")
 - Support `%UniqueNode` when appropriate
 - Add C# snippet variants
 - Let users choose snippet style in plugin settings
-- Add context-menu integration in the Scene dock
