@@ -105,7 +105,7 @@ The addon can be configured in Project Settings with:
 - `godotdev_nvim_node_copy/enable_gdscript`
 - `godotdev_nvim_node_copy/enable_csharp`
 
-<div align="center"><img src="assets/screenshot3.png" width="400"></div>
+<div align="left"><img src="assets/screenshot3.png" width="400"></div>
 
 This controls which language-specific copy actions appear in:
 - `Project > Tools`
