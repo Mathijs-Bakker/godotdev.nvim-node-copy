@@ -26,6 +26,8 @@ It adds copy actions for the currently selected node so you can paste useful ref
 - Copy a `$Node/Child` reference
 - Copy a `get_node("Node/Child")` expression
 - Copy a typed `@onready var` snippet
+- Copy a typed `GetNode<T>()` C# expression
+- Copy a C# property snippet
 - Works from the current editor selection
 - Clipboard-only workflow; no Neovim-side receiver required
 
@@ -55,6 +57,8 @@ Available actions:
 - `Project > Tools > godotdev.nvim: Copy $ Reference`
 - `Project > Tools > godotdev.nvim: Copy get_node()`
 - `Project > Tools > godotdev.nvim: Copy @onready Var`
+- `Project > Tools > godotdev.nvim: Copy C# GetNode<T>()`
+- `Project > Tools > godotdev.nvim: Copy C# Property`
 
 The generated text is copied to your clipboard. Paste it in Neovim where you want it.
 
@@ -78,11 +82,37 @@ get_node("Player")
 @onready var player: CharacterBody2D = $Player
 ```
 
+```csharp
+GetNode<CharacterBody2D>("Player")
+```
+
+```csharp
+private CharacterBody2D Player => GetNode<CharacterBody2D>("Player");
+```
+
 ## Notes
 
 - The addon uses the selected node relative to the currently edited scene root.
 - If the selected node is the scene root itself, the generated snippets use `self` where appropriate.
-- The addon currently targets GDScript snippets first.
+- The addon supports both GDScript and C# snippet output.
+
+## Configuration
+
+The addon can be configured in Project Settings with:
+
+`godotdev_nvim_node_copy/enabled_languages`
+
+Supported values:
+- `["gdscript"]`
+- `["csharp"]`
+- `["gdscript", "csharp"]`
+
+This controls which language-specific copy actions appear in:
+- `Project > Tools`
+- the Scene Tree right-click menu
+- the 2D editor right-click menu
+
+`Copy Node Path` remains available regardless of language selection.
 
 ## Icon Import
 
