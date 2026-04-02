@@ -20,6 +20,8 @@
 
 It adds copy actions for the currently selected node so you can paste useful references directly into Neovim without relying on drag-and-drop or custom IPC.
 
+<div align="center"><img src="assets/screenshot1.png" width="400">        <img src="assets/screenshot2.png" width="400"></div>
+
 ## Features
 
 - Copy the selected node path relative to the current scene root
@@ -102,6 +104,8 @@ The addon can be configured in Project Settings with:
 
 - `godotdev_nvim_node_copy/enable_gdscript`
 - `godotdev_nvim_node_copy/enable_csharp`
+
+<div align="center"><img src="assets/screenshot1.png" width="400"></div>
 
 This controls which language-specific copy actions appear in:
 - `Project > Tools`
