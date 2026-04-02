@@ -100,12 +100,8 @@ private CharacterBody2D Player => GetNode<CharacterBody2D>("Player");
 
 The addon can be configured in Project Settings with:
 
-`godotdev_nvim_node_copy/enabled_languages`
-
-Supported values:
-- `["gdscript"]`
-- `["csharp"]`
-- `["gdscript", "csharp"]`
+- `godotdev_nvim_node_copy/enable_gdscript`
+- `godotdev_nvim_node_copy/enable_csharp`
 
 This controls which language-specific copy actions appear in:
 - `Project > Tools`

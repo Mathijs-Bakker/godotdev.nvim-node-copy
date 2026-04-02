@@ -8,7 +8,8 @@ const MENU_COPY_ONREADY_VAR := "godotdev.nvim: Copy @onready Var"
 const MENU_COPY_CSHARP_GET_NODE := "godotdev.nvim: Copy C# GetNode<T>()"
 const MENU_COPY_CSHARP_PROPERTY := "godotdev.nvim: Copy C# Property"
 const MENU_ICON := preload("res://addons/godotdev_nvim_node_copy/assets/godotdev_nvim_icon.svg")
-const SETTING_ENABLED_LANGUAGES := "godotdev_nvim_node_copy/enabled_languages"
+const SETTING_ENABLE_GDSCRIPT := "godotdev_nvim_node_copy/enable_gdscript"
+const SETTING_ENABLE_CSHARP := "godotdev_nvim_node_copy/enable_csharp"
 
 const CONTEXT_ID_COPY_NODE_PATH := 1001
 const CONTEXT_ID_COPY_DOLLAR_REFERENCE := 1002
@@ -33,36 +34,29 @@ func _exit_tree() -> void:
 
 
 func _register_settings() -> void:
-	if ProjectSettings.has_setting(SETTING_ENABLED_LANGUAGES):
-		return
+	if not ProjectSettings.has_setting(SETTING_ENABLE_GDSCRIPT):
+		ProjectSettings.set_setting(SETTING_ENABLE_GDSCRIPT, true)
+		ProjectSettings.set_initial_value(SETTING_ENABLE_GDSCRIPT, true)
+		ProjectSettings.add_property_info({
+			"name": SETTING_ENABLE_GDSCRIPT,
+			"type": TYPE_BOOL,
+		})
 
-	ProjectSettings.set_setting(SETTING_ENABLED_LANGUAGES, PackedStringArray(["gdscript", "csharp"]))
-	ProjectSettings.set_initial_value(SETTING_ENABLED_LANGUAGES, PackedStringArray(["gdscript", "csharp"]))
-	ProjectSettings.add_property_info({
-		"name": SETTING_ENABLED_LANGUAGES,
-		"type": TYPE_PACKED_STRING_ARRAY,
-		"hint_string": "gdscript,csharp",
-	})
-
-
-func _enabled_languages() -> PackedStringArray:
-	var value = ProjectSettings.get_setting(SETTING_ENABLED_LANGUAGES, PackedStringArray(["gdscript", "csharp"]))
-	if value is PackedStringArray:
-		return value
-
-	var languages := PackedStringArray()
-	if value is Array:
-		for item in value:
-			languages.append(String(item))
-	return languages
+	if not ProjectSettings.has_setting(SETTING_ENABLE_CSHARP):
+		ProjectSettings.set_setting(SETTING_ENABLE_CSHARP, true)
+		ProjectSettings.set_initial_value(SETTING_ENABLE_CSHARP, true)
+		ProjectSettings.add_property_info({
+			"name": SETTING_ENABLE_CSHARP,
+			"type": TYPE_BOOL,
+		})
 
 
 func _gdscript_enabled() -> bool:
-	return _enabled_languages().has("gdscript")
+	return bool(ProjectSettings.get_setting(SETTING_ENABLE_GDSCRIPT, true))
 
 
 func _csharp_enabled() -> bool:
-	return _enabled_languages().has("csharp")
+	return bool(ProjectSettings.get_setting(SETTING_ENABLE_CSHARP, true))
 
 
 func _add_tool_menu_items() -> void:
