@@ -5,7 +5,10 @@ const MENU_COPY_NODE_PATH := "godotdev.nvim: Copy Node Path"
 const MENU_COPY_DOLLAR_REFERENCE := "godotdev.nvim: Copy $ Reference"
 const MENU_COPY_GET_NODE := "godotdev.nvim: Copy get_node()"
 const MENU_COPY_ONREADY_VAR := "godotdev.nvim: Copy @onready Var"
+const MENU_COPY_CSHARP_GET_NODE := "godotdev.nvim: Copy C# GetNode<T>()"
+const MENU_COPY_CSHARP_PROPERTY := "godotdev.nvim: Copy C# Property"
 const MENU_ICON := preload("res://addons/godotdev_nvim_node_copy/assets/godotdev_nvim_icon.svg")
+const SETTING_ENABLED_LANGUAGES := "godotdev_nvim_node_copy/enabled_languages"
 
 const CONTEXT_ID_COPY_NODE_PATH := 1001
 const CONTEXT_ID_COPY_DOLLAR_REFERENCE := 1002
@@ -17,21 +20,74 @@ var _canvas_item_context_menu := CanvasItemContextMenuPlugin.new(self)
 
 
 func _enter_tree() -> void:
-	add_tool_menu_item(MENU_COPY_NODE_PATH, _copy_node_path)
-	add_tool_menu_item(MENU_COPY_DOLLAR_REFERENCE, _copy_dollar_reference)
-	add_tool_menu_item(MENU_COPY_GET_NODE, _copy_get_node_reference)
-	add_tool_menu_item(MENU_COPY_ONREADY_VAR, _copy_onready_var)
+	_register_settings()
+	_add_tool_menu_items()
 	add_context_menu_plugin(EditorContextMenuPlugin.CONTEXT_SLOT_SCENE_TREE, _scene_tree_context_menu)
 	add_context_menu_plugin(EditorContextMenuPlugin.CONTEXT_SLOT_2D_EDITOR, _canvas_item_context_menu)
 
 
 func _exit_tree() -> void:
-	remove_tool_menu_item(MENU_COPY_NODE_PATH)
-	remove_tool_menu_item(MENU_COPY_DOLLAR_REFERENCE)
-	remove_tool_menu_item(MENU_COPY_GET_NODE)
-	remove_tool_menu_item(MENU_COPY_ONREADY_VAR)
+	_remove_tool_menu_items()
 	remove_context_menu_plugin(_scene_tree_context_menu)
 	remove_context_menu_plugin(_canvas_item_context_menu)
+
+
+func _register_settings() -> void:
+	if ProjectSettings.has_setting(SETTING_ENABLED_LANGUAGES):
+		return
+
+	ProjectSettings.set_setting(SETTING_ENABLED_LANGUAGES, PackedStringArray(["gdscript", "csharp"]))
+	ProjectSettings.set_initial_value(SETTING_ENABLED_LANGUAGES, PackedStringArray(["gdscript", "csharp"]))
+	ProjectSettings.add_property_info({
+		"name": SETTING_ENABLED_LANGUAGES,
+		"type": TYPE_PACKED_STRING_ARRAY,
+		"hint_string": "gdscript,csharp",
+	})
+
+
+func _enabled_languages() -> PackedStringArray:
+	var value = ProjectSettings.get_setting(SETTING_ENABLED_LANGUAGES, PackedStringArray(["gdscript", "csharp"]))
+	if value is PackedStringArray:
+		return value
+
+	var languages := PackedStringArray()
+	if value is Array:
+		for item in value:
+			languages.append(String(item))
+	return languages
+
+
+func _gdscript_enabled() -> bool:
+	return _enabled_languages().has("gdscript")
+
+
+func _csharp_enabled() -> bool:
+	return _enabled_languages().has("csharp")
+
+
+func _add_tool_menu_items() -> void:
+	add_tool_menu_item(MENU_COPY_NODE_PATH, _copy_node_path)
+
+	if _gdscript_enabled():
+		add_tool_menu_item(MENU_COPY_DOLLAR_REFERENCE, _copy_dollar_reference)
+		add_tool_menu_item(MENU_COPY_GET_NODE, _copy_get_node_reference)
+		add_tool_menu_item(MENU_COPY_ONREADY_VAR, _copy_onready_var)
+
+	if _csharp_enabled():
+		add_tool_menu_item(MENU_COPY_CSHARP_GET_NODE, _copy_csharp_get_node_reference)
+		add_tool_menu_item(MENU_COPY_CSHARP_PROPERTY, _copy_csharp_property_snippet)
+
+
+func _remove_tool_menu_items() -> void:
+	for menu_name in [
+		MENU_COPY_NODE_PATH,
+		MENU_COPY_DOLLAR_REFERENCE,
+		MENU_COPY_GET_NODE,
+		MENU_COPY_ONREADY_VAR,
+		MENU_COPY_CSHARP_GET_NODE,
+		MENU_COPY_CSHARP_PROPERTY,
+	]:
+		remove_tool_menu_item(menu_name)
 
 
 func _copy_node_path() -> void:
@@ -55,6 +111,18 @@ func _copy_get_node_reference() -> void:
 func _copy_onready_var() -> void:
 	_copy_for_selected_node(func(selected: Node) -> String:
 		return _onready_var_snippet(selected)
+	)
+
+
+func _copy_csharp_get_node_reference() -> void:
+	_copy_for_selected_node(func(selected: Node) -> String:
+		return _csharp_get_node_reference(selected)
+	)
+
+
+func _copy_csharp_property_snippet() -> void:
+	_copy_for_selected_node(func(selected: Node) -> String:
+		return _csharp_property_snippet(selected)
 	)
 
 
@@ -128,6 +196,21 @@ func _onready_var_snippet(node: Node) -> String:
 	return "@onready var %s: %s = %s" % [variable_name, type_name, reference]
 
 
+func _csharp_get_node_reference(node: Node) -> String:
+	var path := _relative_node_path(node)
+	if path == ".":
+		return "this"
+
+	return 'GetNode<%s>("%s")' % [node.get_class(), path]
+
+
+func _csharp_property_snippet(node: Node) -> String:
+	var property_name := _property_name_for_node(node)
+	var type_name := node.get_class()
+	var reference := _csharp_get_node_reference(node)
+	return "private %s %s => %s;" % [type_name, property_name, reference]
+
+
 func _variable_name_for_node(node: Node) -> String:
 	var base_name := String(node.name).to_snake_case()
 	if base_name.is_empty():
@@ -135,6 +218,17 @@ func _variable_name_for_node(node: Node) -> String:
 
 	if _starts_with_ascii_digit(base_name):
 		base_name = "node_%s" % base_name
+
+	return base_name
+
+
+func _property_name_for_node(node: Node) -> String:
+	var base_name := String(node.name).to_pascal_case()
+	if base_name.is_empty():
+		base_name = "Node"
+
+	if _starts_with_ascii_digit(base_name):
+		base_name = "Node%s" % base_name
 
 	return base_name
 
@@ -165,9 +259,15 @@ class SceneTreeContextMenuPlugin extends EditorContextMenuPlugin:
 			return
 
 		add_context_menu_item(MENU_COPY_NODE_PATH, _copy_node_path_context, MENU_ICON)
-		add_context_menu_item(MENU_COPY_DOLLAR_REFERENCE, _copy_dollar_reference_context, MENU_ICON)
-		add_context_menu_item(MENU_COPY_GET_NODE, _copy_get_node_reference_context, MENU_ICON)
-		add_context_menu_item(MENU_COPY_ONREADY_VAR, _copy_onready_var_context, MENU_ICON)
+
+		if (_plugin as EditorPlugin)._gdscript_enabled():
+			add_context_menu_item(MENU_COPY_DOLLAR_REFERENCE, _copy_dollar_reference_context, MENU_ICON)
+			add_context_menu_item(MENU_COPY_GET_NODE, _copy_get_node_reference_context, MENU_ICON)
+			add_context_menu_item(MENU_COPY_ONREADY_VAR, _copy_onready_var_context, MENU_ICON)
+
+		if (_plugin as EditorPlugin)._csharp_enabled():
+			add_context_menu_item(MENU_COPY_CSHARP_GET_NODE, _copy_csharp_get_node_reference_context, MENU_ICON)
+			add_context_menu_item(MENU_COPY_CSHARP_PROPERTY, _copy_csharp_property_snippet_context, MENU_ICON)
 
 
 	func _copy_node_path_context(_selection: Array) -> void:
@@ -198,6 +298,20 @@ class SceneTreeContextMenuPlugin extends EditorContextMenuPlugin:
 		)
 
 
+	func _copy_csharp_get_node_reference_context(_selection: Array) -> void:
+		var node: Node = (_plugin as EditorPlugin)._get_selected_node()
+		(_plugin as EditorPlugin)._copy_for_node(node, func(selected: Node) -> String:
+			return (_plugin as EditorPlugin)._csharp_get_node_reference(selected)
+		)
+
+
+	func _copy_csharp_property_snippet_context(_selection: Array) -> void:
+		var node: Node = (_plugin as EditorPlugin)._get_selected_node()
+		(_plugin as EditorPlugin)._copy_for_node(node, func(selected: Node) -> String:
+			return (_plugin as EditorPlugin)._csharp_property_snippet(selected)
+		)
+
+
 class CanvasItemContextMenuPlugin extends EditorContextMenuPlugin:
 	var _plugin: EditorPlugin
 
@@ -211,9 +325,15 @@ class CanvasItemContextMenuPlugin extends EditorContextMenuPlugin:
 			return
 
 		add_context_menu_item(MENU_COPY_NODE_PATH, _copy_node_path_context, MENU_ICON)
-		add_context_menu_item(MENU_COPY_DOLLAR_REFERENCE, _copy_dollar_reference_context, MENU_ICON)
-		add_context_menu_item(MENU_COPY_GET_NODE, _copy_get_node_reference_context, MENU_ICON)
-		add_context_menu_item(MENU_COPY_ONREADY_VAR, _copy_onready_var_context, MENU_ICON)
+
+		if (_plugin as EditorPlugin)._gdscript_enabled():
+			add_context_menu_item(MENU_COPY_DOLLAR_REFERENCE, _copy_dollar_reference_context, MENU_ICON)
+			add_context_menu_item(MENU_COPY_GET_NODE, _copy_get_node_reference_context, MENU_ICON)
+			add_context_menu_item(MENU_COPY_ONREADY_VAR, _copy_onready_var_context, MENU_ICON)
+
+		if (_plugin as EditorPlugin)._csharp_enabled():
+			add_context_menu_item(MENU_COPY_CSHARP_GET_NODE, _copy_csharp_get_node_reference_context, MENU_ICON)
+			add_context_menu_item(MENU_COPY_CSHARP_PROPERTY, _copy_csharp_property_snippet_context, MENU_ICON)
 
 
 	func _copy_node_path_context(selection: Array) -> void:
@@ -241,6 +361,20 @@ class CanvasItemContextMenuPlugin extends EditorContextMenuPlugin:
 		var node: Node = _node_from_selection(selection)
 		(_plugin as EditorPlugin)._copy_for_node(node, func(selected: Node) -> String:
 			return (_plugin as EditorPlugin)._onready_var_snippet(selected)
+		)
+
+
+	func _copy_csharp_get_node_reference_context(selection: Array) -> void:
+		var node: Node = _node_from_selection(selection)
+		(_plugin as EditorPlugin)._copy_for_node(node, func(selected: Node) -> String:
+			return (_plugin as EditorPlugin)._csharp_get_node_reference(selected)
+		)
+
+
+	func _copy_csharp_property_snippet_context(selection: Array) -> void:
+		var node: Node = _node_from_selection(selection)
+		(_plugin as EditorPlugin)._copy_for_node(node, func(selected: Node) -> String:
+			return (_plugin as EditorPlugin)._csharp_property_snippet(selected)
 		)
 
 
