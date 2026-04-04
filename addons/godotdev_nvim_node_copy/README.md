@@ -8,6 +8,19 @@ references directly into Neovim without relying on drag-and-drop or custom IPC.
 
 ## Install
 
+### From AssetLib in the Godot editor
+
+1. Open your project in Godot.
+2. Go to the `AssetLib` tab.
+3. Search for `godotdev.nvim-node-copy`.
+4. Open the asset page and click `Download`.
+5. Keep the install destination as your project root so Godot imports the
+   addon into `res://addons/godotdev_nvim_node_copy`.
+6. After import, go to `Project > Project Settings > Plugins` and enable
+   `godotdev.nvim-node-copy`.
+
+### Manual install
+
 Place this folder in your Godot project at:
 
 ```text
