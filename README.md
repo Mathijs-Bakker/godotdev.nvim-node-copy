@@ -18,7 +18,7 @@
 
 `godotdev.nvim-node-copy` is a small Godot editor addon for users of [`godotdev.nvim`](https://github.com/Mathijs-Bakker/godotdev.nvim).
 
-It adds copy actions for the currently selected node so you can paste useful references directly into Neovim without relying on drag-and-drop or custom IPC.
+It adds node-reference actions for the currently selected node and can either copy the generated text to the clipboard or insert it directly into the active Neovim buffer.
 
 <div align="center"><img src="assets/screenshot1.png" width="400">        <img src="assets/screenshot2.png" width="400"></div>
 
@@ -31,7 +31,8 @@ It adds copy actions for the currently selected node so you can paste useful ref
 - Copy a typed `GetNode<T>()` C# expression
 - Copy a C# property snippet
 - Works from the current editor selection
-- Clipboard-only workflow; no Neovim-side receiver required
+- Clipboard workflow for manual paste
+- Optional direct insertion into the active Neovim buffer through Neovim's editor server
 
 ## Install
 
@@ -75,7 +76,7 @@ Available actions:
 - `Project > Tools > godotdev.nvim: Copy C# GetNode<T>()`
 - `Project > Tools > godotdev.nvim: Copy C# Property`
 
-The generated text is copied to your clipboard. Paste it in Neovim where you want it.
+By default, the generated text is copied to your clipboard. You can also configure the addon to insert it directly into the active Neovim buffer.
 
 ## Example Output
 
@@ -117,6 +118,10 @@ The addon can be configured in Project Settings with:
 
 - `godotdev_nvim_node_copy/enable_gdscript`
 - `godotdev_nvim_node_copy/enable_csharp`
+- `godotdev_nvim_node_copy/output/mode`
+- `godotdev_nvim_node_copy/output/neovim_executable`
+- `godotdev_nvim_node_copy/output/neovim_server_address`
+- `godotdev_nvim_node_copy/output/fallback_to_clipboard`
 
 <div align="left"><img src="assets/screenshot3.png" width="400"></div>
 
@@ -126,6 +131,19 @@ This controls which language-specific copy actions appear in:
 - the 2D editor right-click menu
 
 `Copy Node Path` remains available regardless of language selection.
+
+Output settings:
+- `godotdev_nvim_node_copy/output/mode`: `clipboard` or `neovim_remote`
+- `godotdev_nvim_node_copy/output/neovim_executable`: the executable used for remote insertion, default `nvim`
+- `godotdev_nvim_node_copy/output/neovim_server_address`: the Neovim server address to target, default `/tmp/godot.nvim` on macOS/Linux and `\\.\pipe\godot.nvim` on Windows
+- `godotdev_nvim_node_copy/output/fallback_to_clipboard`: if enabled, failed remote insertion falls back to the clipboard
+
+To use direct insertion:
+1. Enable the editor server in `godotdev.nvim`, for example with `autostart_editor_server = true`, or start it manually with `:GodotStartEditorServer`.
+2. Make sure the server address in Godot matches the Neovim server address configured in `godotdev.nvim`.
+3. Set `godotdev_nvim_node_copy/output/mode` to `neovim_remote`.
+
+This works well with the current `godotdev.nvim` formatter defaults because inserted `@onready` snippets can then be reordered automatically by `gdscript-formatter --reorder-code` on save.
 
 ## Icon Import
 

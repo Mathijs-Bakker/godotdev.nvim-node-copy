@@ -3,8 +3,9 @@
 `godotdev.nvim-node-copy` is a Godot editor addon for users of
 [`godotdev.nvim`](https://github.com/Mathijs-Bakker/godotdev.nvim).
 
-It adds copy actions for the currently selected node so you can paste useful
-references directly into Neovim without relying on drag-and-drop or custom IPC.
+It adds node-reference actions for the currently selected node and can either
+copy the generated text to the clipboard or insert it directly into the active
+Neovim buffer.
 
 ## Install
 
@@ -54,8 +55,21 @@ Project Settings keys:
 
 - `godotdev_nvim_node_copy/enable_gdscript`
 - `godotdev_nvim_node_copy/enable_csharp`
+- `godotdev_nvim_node_copy/output/mode`
+- `godotdev_nvim_node_copy/output/neovim_executable`
+- `godotdev_nvim_node_copy/output/neovim_server_address`
+- `godotdev_nvim_node_copy/output/fallback_to_clipboard`
 
 `Copy Node Path` remains available regardless of language selection.
+
+Output settings:
+- `godotdev_nvim_node_copy/output/mode`: `clipboard` or `neovim_remote`
+- `godotdev_nvim_node_copy/output/neovim_executable`: the executable used for remote insertion, default `nvim`
+- `godotdev_nvim_node_copy/output/neovim_server_address`: the Neovim server address to target
+- `godotdev_nvim_node_copy/output/fallback_to_clipboard`: fall back to the clipboard if remote insertion fails
+
+To use direct insertion, start the Neovim editor server from `godotdev.nvim`
+and set `godotdev_nvim_node_copy/output/mode` to `neovim_remote`.
 
 ## Repository
 
