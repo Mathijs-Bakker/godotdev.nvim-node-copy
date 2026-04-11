@@ -10,6 +10,14 @@ const MENU_COPY_CSHARP_PROPERTY := "godotdev.nvim: Copy C# Property"
 const MENU_ICON := preload("res://addons/godotdev_nvim_node_copy/assets/godotdev_nvim_icon.svg")
 const SETTING_ENABLE_GDSCRIPT := "godotdev_nvim_node_copy/enable_gdscript"
 const SETTING_ENABLE_CSHARP := "godotdev_nvim_node_copy/enable_csharp"
+const SETTING_OUTPUT_MODE := "godotdev_nvim_node_copy/output/mode"
+const SETTING_NEOVIM_EXECUTABLE := "godotdev_nvim_node_copy/output/neovim_executable"
+const SETTING_NEOVIM_SERVER_ADDRESS := "godotdev_nvim_node_copy/output/neovim_server_address"
+const SETTING_FALLBACK_TO_CLIPBOARD := "godotdev_nvim_node_copy/output/fallback_to_clipboard"
+const OUTPUT_MODE_CLIPBOARD := "clipboard"
+const OUTPUT_MODE_NEOVIM := "neovim_remote"
+const DEFAULT_UNIX_SERVER_ADDRESS := "/tmp/godot.nvim"
+const DEFAULT_WINDOWS_SERVER_ADDRESS := "\\\\.\\pipe\\godot.nvim"
 
 const CONTEXT_ID_COPY_NODE_PATH := 1001
 const CONTEXT_ID_COPY_DOLLAR_REFERENCE := 1002
@@ -50,6 +58,41 @@ func _register_settings() -> void:
 			"type": TYPE_BOOL,
 		})
 
+	if not ProjectSettings.has_setting(SETTING_OUTPUT_MODE):
+		ProjectSettings.set_setting(SETTING_OUTPUT_MODE, OUTPUT_MODE_CLIPBOARD)
+		ProjectSettings.set_initial_value(SETTING_OUTPUT_MODE, OUTPUT_MODE_CLIPBOARD)
+		ProjectSettings.add_property_info({
+			"name": SETTING_OUTPUT_MODE,
+			"type": TYPE_STRING,
+			"hint": PROPERTY_HINT_ENUM,
+			"hint_string": "clipboard,neovim_remote",
+		})
+
+	if not ProjectSettings.has_setting(SETTING_NEOVIM_EXECUTABLE):
+		ProjectSettings.set_setting(SETTING_NEOVIM_EXECUTABLE, "nvim")
+		ProjectSettings.set_initial_value(SETTING_NEOVIM_EXECUTABLE, "nvim")
+		ProjectSettings.add_property_info({
+			"name": SETTING_NEOVIM_EXECUTABLE,
+			"type": TYPE_STRING,
+		})
+
+	if not ProjectSettings.has_setting(SETTING_NEOVIM_SERVER_ADDRESS):
+		var default_server_address := _default_neovim_server_address()
+		ProjectSettings.set_setting(SETTING_NEOVIM_SERVER_ADDRESS, default_server_address)
+		ProjectSettings.set_initial_value(SETTING_NEOVIM_SERVER_ADDRESS, default_server_address)
+		ProjectSettings.add_property_info({
+			"name": SETTING_NEOVIM_SERVER_ADDRESS,
+			"type": TYPE_STRING,
+		})
+
+	if not ProjectSettings.has_setting(SETTING_FALLBACK_TO_CLIPBOARD):
+		ProjectSettings.set_setting(SETTING_FALLBACK_TO_CLIPBOARD, true)
+		ProjectSettings.set_initial_value(SETTING_FALLBACK_TO_CLIPBOARD, true)
+		ProjectSettings.add_property_info({
+			"name": SETTING_FALLBACK_TO_CLIPBOARD,
+			"type": TYPE_BOOL,
+		})
+
 
 func _gdscript_enabled() -> bool:
 	return bool(ProjectSettings.get_setting(SETTING_ENABLE_GDSCRIPT, true))
@@ -57,6 +100,32 @@ func _gdscript_enabled() -> bool:
 
 func _csharp_enabled() -> bool:
 	return bool(ProjectSettings.get_setting(SETTING_ENABLE_CSHARP, true))
+
+
+func _output_mode() -> String:
+	return String(ProjectSettings.get_setting(SETTING_OUTPUT_MODE, OUTPUT_MODE_CLIPBOARD))
+
+
+func _fallback_to_clipboard_enabled() -> bool:
+	return bool(ProjectSettings.get_setting(SETTING_FALLBACK_TO_CLIPBOARD, true))
+
+
+func _neovim_executable() -> String:
+	var executable := String(ProjectSettings.get_setting(SETTING_NEOVIM_EXECUTABLE, "nvim")).strip_edges()
+	if executable.is_empty():
+		return "nvim"
+
+	return executable
+
+
+func _neovim_server_address() -> String:
+	var address := String(
+		ProjectSettings.get_setting(SETTING_NEOVIM_SERVER_ADDRESS, _default_neovim_server_address())
+	).strip_edges()
+	if address.is_empty():
+		return _default_neovim_server_address()
+
+	return address
 
 
 func _add_tool_menu_items() -> void:
@@ -125,14 +194,14 @@ func _copy_for_selected_node(renderer: Callable) -> void:
 	if selected == null:
 		return
 
-	_copy_to_clipboard(renderer.call(selected))
+	_deliver_text(renderer.call(selected))
 
 
 func _copy_for_node(node: Node, renderer: Callable) -> void:
 	if node == null:
 		return
 
-	_copy_to_clipboard(renderer.call(node))
+	_deliver_text(renderer.call(node))
 
 
 func _get_selected_node() -> Node:
@@ -233,6 +302,79 @@ func _starts_with_ascii_digit(value: String) -> bool:
 
 	var code := value.unicode_at(0)
 	return code >= 48 and code <= 57
+
+
+func _default_neovim_server_address() -> String:
+	if OS.get_name() == "Windows":
+		return DEFAULT_WINDOWS_SERVER_ADDRESS
+
+	return DEFAULT_UNIX_SERVER_ADDRESS
+
+
+func _deliver_text(text: String) -> void:
+	if _output_mode() == OUTPUT_MODE_NEOVIM:
+		if _insert_into_neovim(text):
+			return
+
+		if not _fallback_to_clipboard_enabled():
+			return
+
+		push_warning("godotdev.nvim-node-copy: falling back to the clipboard")
+
+	_copy_to_clipboard(text)
+
+
+func _insert_into_neovim(text: String) -> bool:
+	var output: Array = []
+	var expression := _build_neovim_insert_expression(text)
+	var exit_code := OS.execute(_neovim_executable(), [
+		"--server",
+		_neovim_server_address(),
+		"--remote-expr",
+		expression,
+	], output, true)
+
+	if exit_code != 0:
+		push_warning(
+			"godotdev.nvim-node-copy: failed to insert into Neovim server `%s` with `%s` (exit code %d)%s"
+			% [_neovim_server_address(), _neovim_executable(), exit_code, _joined_output_suffix(output)]
+		)
+		return false
+
+	print("godotdev.nvim-node-copy: inserted text into Neovim buffer")
+	return true
+
+
+func _build_neovim_insert_expression(text: String) -> String:
+	var encoded_text := JSON.stringify(text)
+	var insert_expression := (
+		"local lines = vim.split(_A, '\\n', { plain = true }); "
+		+ "local line_count = #lines; "
+		+ "local win = vim.api.nvim_get_current_win(); "
+		+ "local buf = vim.api.nvim_win_get_buf(win); "
+		+ "local cursor = vim.api.nvim_win_get_cursor(win); "
+		+ "local row = cursor[1] - 1; "
+		+ "local col = cursor[2]; "
+		+ "vim.api.nvim_buf_set_text(buf, row, col, row, col, lines); "
+		+ "local last_line = lines[line_count]; "
+		+ "local target_col = (line_count == 1 and col or 0) + #last_line; "
+		+ "vim.api.nvim_win_set_cursor(win, { row + line_count, target_col }); "
+		+ "return 'ok'"
+	)
+	return (
+		"luaeval("
+		+ JSON.stringify(insert_expression)
+		+ ", "
+		+ encoded_text
+		+ ")"
+	)
+
+
+func _joined_output_suffix(output: Array) -> String:
+	if output.is_empty():
+		return ""
+
+	return ": %s" % "\n".join(PackedStringArray(output))
 
 
 func _copy_to_clipboard(text: String) -> void:
