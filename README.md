@@ -18,7 +18,7 @@
 
 `godotdev.nvim-node-copy` is a small Godot editor addon for users of [`godotdev.nvim`](https://github.com/Mathijs-Bakker/godotdev.nvim).
 
-It adds node-reference actions for the currently selected node and can either copy the generated text to the clipboard or insert it directly into the active Neovim buffer.
+It adds node-reference actions for the currently selected node and can either copy the generated text to the clipboard or, experimentally, insert it directly at the current cursor position in the active Neovim buffer.
 
 <div align="center"><img src="assets/screenshot1.png" width="400">        <img src="assets/screenshot2.png" width="400"></div>
 
@@ -32,7 +32,7 @@ It adds node-reference actions for the currently selected node and can either co
 - Copy a C# property snippet
 - Works from the current editor selection
 - Clipboard workflow for manual paste
-- Optional direct insertion into the active Neovim buffer through Neovim's editor server
+- Experimental direct insertion at the current cursor in the active Neovim buffer through Neovim's editor server
 
 ## Install
 
@@ -76,7 +76,7 @@ Available actions:
 - `Project > Tools > godotdev.nvim: Copy C# GetNode<T>()`
 - `Project > Tools > godotdev.nvim: Copy C# Property`
 
-By default, the generated text is copied to your clipboard. You can also configure the addon to insert it directly into the active Neovim buffer.
+By default, the generated text is copied to your clipboard. You can also configure the addon to use an experimental insert-at-cursor mode for an already-open Neovim buffer.
 
 ## Example Output
 
@@ -138,12 +138,14 @@ Output settings:
 - `godotdev_nvim_node_copy/output/neovim_server_address`: the Neovim server address to target, default `/tmp/godot.nvim` on macOS/Linux and `\\.\pipe\godot.nvim` on Windows
 - `godotdev_nvim_node_copy/output/fallback_to_clipboard`: if enabled, failed remote insertion falls back to the clipboard
 
-To use direct insertion:
+Experimental `neovim_remote` mode inserts text at the current Neovim cursor. It is not drag-and-drop and works best when the target script is already open in Neovim.
+
+To use experimental direct insertion:
 1. Enable the editor server in `godotdev.nvim`, for example with `autostart_editor_server = true`, or start it manually with `:GodotStartEditorServer`.
 2. Make sure the server address in Godot matches the Neovim server address configured in `godotdev.nvim`.
 3. Set `godotdev_nvim_node_copy/output/mode` to `neovim_remote`.
 
-This works well with the current `godotdev.nvim` formatter defaults because inserted `@onready` snippets can then be reordered automatically by `gdscript-formatter --reorder-code` on save.
+This works well when you are inserting multiple nodes into a file that is already open in Neovim. With the current `godotdev.nvim` defaults, `gdscript-formatter --reorder-code` can reorder inserted `@onready` snippets for you on save.
 
 ## Icon Import
 
