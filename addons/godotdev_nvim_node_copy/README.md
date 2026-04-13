@@ -4,8 +4,8 @@
 [`godotdev.nvim`](https://github.com/Mathijs-Bakker/godotdev.nvim).
 
 It adds node-reference actions for the currently selected node and can either
-copy the generated text to the clipboard or insert it directly into the active
-Neovim buffer.
+copy the generated text to the clipboard or, experimentally, insert it at the
+current cursor position in the active Neovim buffer.
 
 ## Install
 
@@ -68,8 +68,17 @@ Output settings:
 - `godotdev_nvim_node_copy/output/neovim_server_address`: the Neovim server address to target
 - `godotdev_nvim_node_copy/output/fallback_to_clipboard`: fall back to the clipboard if remote insertion fails
 
-To use direct insertion, start the Neovim editor server from `godotdev.nvim`
-and set `godotdev_nvim_node_copy/output/mode` to `neovim_remote`.
+Experimental `neovim_remote` mode inserts text at the current Neovim cursor. It
+is not drag-and-drop and works best when the target script is already open in
+Neovim.
+
+To use experimental direct insertion, start the Neovim editor server from
+`godotdev.nvim` and set `godotdev_nvim_node_copy/output/mode` to
+`neovim_remote`.
+
+This is especially useful when you need to insert multiple nodes into the same
+file. With the current `godotdev.nvim` defaults, `gdscript-formatter
+--reorder-code` can then reorganize inserted `@onready` snippets on save.
 
 ## Repository
 
