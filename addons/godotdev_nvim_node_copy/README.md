@@ -59,6 +59,8 @@ Project Settings keys:
 - `godotdev_nvim_node_copy/output/neovim_executable`
 - `godotdev_nvim_node_copy/output/neovim_server_address`
 - `godotdev_nvim_node_copy/output/fallback_to_clipboard`
+- `godotdev_nvim_node_copy/output/focus_after_neovim_remote`
+- `godotdev_nvim_node_copy/output/focus_application`
 
 `Copy Node Path` remains available regardless of language selection.
 
@@ -67,14 +69,21 @@ Output settings:
 - `godotdev_nvim_node_copy/output/neovim_executable`: the executable used for remote insertion, default `nvim`
 - `godotdev_nvim_node_copy/output/neovim_server_address`: the Neovim server address to target
 - `godotdev_nvim_node_copy/output/fallback_to_clipboard`: fall back to the clipboard if remote insertion fails
+- `godotdev_nvim_node_copy/output/focus_after_neovim_remote`: optionally focus your Neovim application after successful remote insertion
+- `godotdev_nvim_node_copy/output/focus_application`: macOS application name to activate after insert, default `Ghostty`
 
 Experimental `neovim_remote` mode inserts text at the current Neovim cursor. It
 is not drag-and-drop and works best when the target script is already open in
-Neovim.
+Neovim. It can also optionally focus your Neovim application after a
+successful insert.
 
 To use experimental direct insertion, start the Neovim editor server from
 `godotdev.nvim` and set `godotdev_nvim_node_copy/output/mode` to
 `neovim_remote`.
+
+On macOS, you can also enable
+`godotdev_nvim_node_copy/output/focus_after_neovim_remote` and set
+`godotdev_nvim_node_copy/output/focus_application` to your terminal app.
 
 This is especially useful when you need to insert multiple nodes into the same
 file. With the current `godotdev.nvim` defaults, `gdscript-formatter

@@ -122,6 +122,8 @@ The addon can be configured in Project Settings with:
 - `godotdev_nvim_node_copy/output/neovim_executable`
 - `godotdev_nvim_node_copy/output/neovim_server_address`
 - `godotdev_nvim_node_copy/output/fallback_to_clipboard`
+- `godotdev_nvim_node_copy/output/focus_after_neovim_remote`
+- `godotdev_nvim_node_copy/output/focus_application`
 
 <div align="left"><img src="assets/screenshot3.png" width="400"></div>
 
@@ -137,13 +139,17 @@ Output settings:
 - `godotdev_nvim_node_copy/output/neovim_executable`: the executable used for remote insertion, default `nvim`
 - `godotdev_nvim_node_copy/output/neovim_server_address`: the Neovim server address to target, default `/tmp/godot.nvim` on macOS/Linux and `\\.\pipe\godot.nvim` on Windows
 - `godotdev_nvim_node_copy/output/fallback_to_clipboard`: if enabled, failed remote insertion falls back to the clipboard
+- `godotdev_nvim_node_copy/output/focus_after_neovim_remote`: optionally focus your Neovim application after successful remote insertion
+- `godotdev_nvim_node_copy/output/focus_application`: macOS application name to activate after insert, default `Ghostty`
 
 Experimental `neovim_remote` mode inserts text at the current Neovim cursor. It is not drag-and-drop and works best when the target script is already open in Neovim.
+It can also optionally focus your Neovim application after a successful insert.
 
 To use experimental direct insertion:
 1. Enable the editor server in `godotdev.nvim`, for example with `autostart_editor_server = true`, or start it manually with `:GodotStartEditorServer`.
 2. Make sure the server address in Godot matches the Neovim server address configured in `godotdev.nvim`.
 3. Set `godotdev_nvim_node_copy/output/mode` to `neovim_remote`.
+4. Optional on macOS: enable `godotdev_nvim_node_copy/output/focus_after_neovim_remote` and set `godotdev_nvim_node_copy/output/focus_application` to your terminal app, such as `Ghostty`, `Kitty`, `iTerm`, or `WezTerm`.
 
 This works well when you are inserting multiple nodes into a file that is already open in Neovim. With the current `godotdev.nvim` defaults, `gdscript-formatter --reorder-code` can reorder inserted `@onready` snippets for you on save.
 

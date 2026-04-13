@@ -14,6 +14,8 @@ const SETTING_OUTPUT_MODE := "godotdev_nvim_node_copy/output/mode"
 const SETTING_NEOVIM_EXECUTABLE := "godotdev_nvim_node_copy/output/neovim_executable"
 const SETTING_NEOVIM_SERVER_ADDRESS := "godotdev_nvim_node_copy/output/neovim_server_address"
 const SETTING_FALLBACK_TO_CLIPBOARD := "godotdev_nvim_node_copy/output/fallback_to_clipboard"
+const SETTING_FOCUS_AFTER_INSERT := "godotdev_nvim_node_copy/output/focus_after_neovim_remote"
+const SETTING_FOCUS_APPLICATION := "godotdev_nvim_node_copy/output/focus_application"
 const OUTPUT_MODE_CLIPBOARD := "clipboard"
 const OUTPUT_MODE_NEOVIM := "neovim_remote"
 const DEFAULT_UNIX_SERVER_ADDRESS := "/tmp/godot.nvim"
@@ -93,6 +95,22 @@ func _register_settings() -> void:
 			"type": TYPE_BOOL,
 		})
 
+	if not ProjectSettings.has_setting(SETTING_FOCUS_AFTER_INSERT):
+		ProjectSettings.set_setting(SETTING_FOCUS_AFTER_INSERT, false)
+		ProjectSettings.set_initial_value(SETTING_FOCUS_AFTER_INSERT, false)
+		ProjectSettings.add_property_info({
+			"name": SETTING_FOCUS_AFTER_INSERT,
+			"type": TYPE_BOOL,
+		})
+
+	if not ProjectSettings.has_setting(SETTING_FOCUS_APPLICATION):
+		ProjectSettings.set_setting(SETTING_FOCUS_APPLICATION, "Ghostty")
+		ProjectSettings.set_initial_value(SETTING_FOCUS_APPLICATION, "Ghostty")
+		ProjectSettings.add_property_info({
+			"name": SETTING_FOCUS_APPLICATION,
+			"type": TYPE_STRING,
+		})
+
 
 func _gdscript_enabled() -> bool:
 	return bool(ProjectSettings.get_setting(SETTING_ENABLE_GDSCRIPT, true))
@@ -108,6 +126,14 @@ func _output_mode() -> String:
 
 func _fallback_to_clipboard_enabled() -> bool:
 	return bool(ProjectSettings.get_setting(SETTING_FALLBACK_TO_CLIPBOARD, true))
+
+
+func _focus_after_insert_enabled() -> bool:
+	return bool(ProjectSettings.get_setting(SETTING_FOCUS_AFTER_INSERT, false))
+
+
+func _focus_application() -> String:
+	return String(ProjectSettings.get_setting(SETTING_FOCUS_APPLICATION, "Ghostty")).strip_edges()
 
 
 func _neovim_executable() -> String:
@@ -314,6 +340,7 @@ func _default_neovim_server_address() -> String:
 func _deliver_text(text: String) -> void:
 	if _output_mode() == OUTPUT_MODE_NEOVIM:
 		if _insert_into_neovim(text):
+			_focus_after_insert()
 			return
 
 		if not _fallback_to_clipboard_enabled():
@@ -343,6 +370,35 @@ func _insert_into_neovim(text: String) -> bool:
 
 	print("godotdev.nvim-node-copy: inserted text into Neovim buffer")
 	return true
+
+
+func _focus_after_insert() -> void:
+	if not _focus_after_insert_enabled():
+		return
+
+	if OS.get_name() != "macOS":
+		push_warning("godotdev.nvim-node-copy: focus-after-insert is currently only implemented for macOS")
+		return
+
+	var application := _focus_application()
+	if application.is_empty():
+		push_warning("godotdev.nvim-node-copy: focus application is empty")
+		return
+
+	var output: Array = []
+	var exit_code := OS.execute("osascript", [
+		"-e",
+		'tell application "%s" to activate' % application,
+	], output, true)
+
+	if exit_code != 0:
+		push_warning(
+			"godotdev.nvim-node-copy: failed to focus application `%s`%s"
+			% [application, _joined_output_suffix(output)]
+		)
+		return
+
+	print("godotdev.nvim-node-copy: focused `%s` after Neovim insertion" % application)
 
 
 func _build_neovim_insert_expression(text: String) -> String:
