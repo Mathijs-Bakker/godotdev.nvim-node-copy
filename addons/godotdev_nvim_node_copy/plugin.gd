@@ -69,8 +69,8 @@ func _register_settings() -> void:
 		})
 
 	if not ProjectSettings.has_setting(SETTING_NEOVIM_EXECUTABLE):
-		ProjectSettings.set_setting(SETTING_NEOVIM_EXECUTABLE, "nvim")
-		ProjectSettings.set_initial_value(SETTING_NEOVIM_EXECUTABLE, "nvim")
+		ProjectSettings.set_setting(SETTING_NEOVIM_EXECUTABLE, "nvr")
+		ProjectSettings.set_initial_value(SETTING_NEOVIM_EXECUTABLE, "nvr")
 		ProjectSettings.add_property_info({
 			"name": SETTING_NEOVIM_EXECUTABLE,
 			"type": TYPE_STRING,
@@ -111,9 +111,9 @@ func _fallback_to_clipboard_enabled() -> bool:
 
 
 func _neovim_executable() -> String:
-	var executable := String(ProjectSettings.get_setting(SETTING_NEOVIM_EXECUTABLE, "nvim")).strip_edges()
+	var executable := String(ProjectSettings.get_setting(SETTING_NEOVIM_EXECUTABLE, "nvr")).strip_edges()
 	if executable.is_empty():
-		return "nvim"
+		return "nvr"
 
 	return executable
 
@@ -328,7 +328,7 @@ func _insert_into_neovim(text: String) -> bool:
 	var output: Array = []
 	var expression := _build_neovim_insert_expression(text)
 	var exit_code := OS.execute(_neovim_executable(), [
-		"--server",
+		"--servername",
 		_neovim_server_address(),
 		"--remote-expr",
 		expression,

@@ -64,13 +64,14 @@ Project Settings keys:
 
 Output settings:
 - `godotdev_nvim_node_copy/output/mode`: `clipboard` or `neovim_remote`
-- `godotdev_nvim_node_copy/output/neovim_executable`: the executable used for remote insertion, default `nvim`
+- `godotdev_nvim_node_copy/output/neovim_executable`: the executable used for remote insertion, default `nvr`
 - `godotdev_nvim_node_copy/output/neovim_server_address`: the Neovim server address to target
 - `godotdev_nvim_node_copy/output/fallback_to_clipboard`: fall back to the clipboard if remote insertion fails
 
 Experimental `neovim_remote` mode inserts text at the current Neovim cursor. It
 is not drag-and-drop and works best when the target script is already open in
-Neovim.
+Neovim. It uses `nvr` for remote insertion, so `nvr` must be installed and
+available in your `PATH`.
 
 To use experimental direct insertion, start the Neovim editor server from
 `godotdev.nvim` and set `godotdev_nvim_node_copy/output/mode` to
