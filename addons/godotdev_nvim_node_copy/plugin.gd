@@ -349,8 +349,13 @@ func _deliver_text(text: String) -> void:
 
 
 func _insert_into_neovim(text: String) -> bool:
+	var temp_path := _write_insert_tempfile(text + "\n")
+	if temp_path.is_empty():
+		push_warning("godotdev.nvim-node-copy: failed to prepare snippet for Neovim insertion")
+		return false
+
 	var output: Array = []
-	var command := _build_neovim_insert_command(text)
+	var command := _build_neovim_insert_command(temp_path)
 	var exit_code := OS.execute(_neovim_executable(), [
 		"--nostart",
 		"--servername",
@@ -358,6 +363,7 @@ func _insert_into_neovim(text: String) -> bool:
 		"-c",
 		command,
 	], output, true)
+	DirAccess.remove_absolute(temp_path)
 
 	if exit_code != 0:
 		push_warning(
@@ -370,13 +376,13 @@ func _insert_into_neovim(text: String) -> bool:
 	return true
 
 
-func _build_neovim_insert_command(text: String) -> String:
-	var text_literal := _lua_long_bracket_literal(text + "\n")
+func _build_neovim_insert_command(temp_path: String) -> String:
+	var path_literal := _lua_long_bracket_literal(temp_path)
 	return (
 		"lua "
-		+ "local text = "
-		+ text_literal
-		+ "; "
+		+ "local text = table.concat(vim.fn.readfile("
+		+ path_literal
+		+ "), '\\n') .. '\\n'; "
 		+ "local lines = vim.split(text, '\\n', { plain = true }); "
 		+ "local line_count = #lines; "
 		+ "local win = vim.api.nvim_get_current_win(); "
@@ -389,6 +395,22 @@ func _build_neovim_insert_command(text: String) -> String:
 		+ "local target_col = (line_count == 1 and col or 0) + #last_line; "
 		+ "vim.api.nvim_win_set_cursor(win, { row + line_count, target_col })"
 	)
+
+
+func _write_insert_tempfile(text: String) -> String:
+	var base_dir := OS.get_user_data_dir().path_join("godotdev_nvim_node_copy")
+	var make_dir_err := DirAccess.make_dir_recursive_absolute(base_dir)
+	if make_dir_err != OK and make_dir_err != ERR_ALREADY_EXISTS:
+		return ""
+
+	var temp_path := base_dir.path_join("insert_%d.txt" % Time.get_ticks_usec())
+	var file := FileAccess.open(temp_path, FileAccess.WRITE)
+	if file == null:
+		return ""
+
+	file.store_string(text)
+	file.close()
+	return temp_path
 
 
 func _lua_long_bracket_literal(text: String) -> String:
