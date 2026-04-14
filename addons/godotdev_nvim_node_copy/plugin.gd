@@ -241,7 +241,7 @@ func _dollar_reference(node: Node) -> String:
 	if path == ".":
 		return "self"
 
-	return "$%s" % path
+	return "$%s" % _path_with_leading_slash(path)
 
 
 func _get_node_reference(node: Node) -> String:
@@ -249,7 +249,7 @@ func _get_node_reference(node: Node) -> String:
 	if path == ".":
 		return "self"
 
-	return 'get_node("%s")' % path
+	return 'get_node("%s")' % _path_with_leading_slash(path)
 
 
 func _onready_var_snippet(node: Node) -> String:
@@ -264,7 +264,14 @@ func _csharp_get_node_reference(node: Node) -> String:
 	if path == ".":
 		return "this"
 
-	return 'GetNode<%s>("%s")' % [node.get_class(), path]
+	return 'GetNode<%s>("%s")' % [node.get_class(), _path_with_leading_slash(path)]
+
+
+func _path_with_leading_slash(path: String) -> String:
+	if path.begins_with("/"):
+		return path
+
+	return "/" + path
 
 
 func _csharp_property_snippet(node: Node) -> String:
@@ -347,7 +354,7 @@ func _insert_into_neovim(text: String) -> bool:
 
 
 func _build_neovim_insert_command(text: String) -> String:
-	var text_literal := _lua_long_bracket_literal(text)
+	var text_literal := _lua_long_bracket_literal(text + "\n")
 	return (
 		"lua "
 		+ "local text = "
