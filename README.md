@@ -138,16 +138,66 @@ Output settings:
 - `godotdev_nvim_node_copy/output/neovim_server_address`: the Neovim server address to target, default `/tmp/godot.nvim` on macOS/Linux and `\\.\pipe\godot.nvim` on Windows
 - `godotdev_nvim_node_copy/output/fallback_to_clipboard`: if enabled, failed remote insertion falls back to the clipboard
 
-Experimental `neovim_remote` mode inserts text at the current Neovim cursor. It is not drag-and-drop and works best when the target script is already open in Neovim.
-It uses `nvr` for remote insertion, so `nvr` must be installed and available in your `PATH`.
+## Experimental Neovim Insert Mode
 
-To use experimental direct insertion:
-1. Enable the editor server in `godotdev.nvim`, for example with `autostart_editor_server = true`, or start it manually with `:GodotStartEditorServer`.
-2. Make sure the server address in Godot matches the Neovim server address configured in `godotdev.nvim`.
-3. Install `nvr` and make sure it is available in your `PATH`.
-4. Set `godotdev_nvim_node_copy/output/mode` to `neovim_remote`.
+`godotdev.nvim-node-copy` supports an experimental `neovim_remote` output mode.
 
-This works well when you are inserting multiple nodes into a file that is already open in Neovim. With the current `godotdev.nvim` defaults, `gdscript-formatter --reorder-code` can reorder inserted `@onready` snippets for you on save.
+Instead of only copying generated node snippets to the clipboard, the addon can
+send them directly to the current cursor position in an already open Neovim
+buffer through Neovim's editor server.
+
+This is experimental because it is not drag-and-drop. It is a cursor-based
+insertion workflow and depends on your Neovim server setup being correct.
+
+### What it is for
+
+- inserting multiple node references into the same file while that file is
+  already open in Neovim
+- staying inside a fast Godot → Neovim workflow without manual paste each time
+- letting `godotdev.nvim` and `gdscript-formatter --reorder-code` reorganize
+  inserted `@onready` lines on save
+
+### What it is not
+
+- a replacement for Godot's internal-editor drag-and-drop
+- aware of the best location in your file to insert code
+- guaranteed to work unless Godot and Neovim both point to the same active
+  server address
+
+It inserts text at the current Neovim cursor position.
+
+### Requirements
+
+To use `neovim_remote` mode:
+
+1. Start the Neovim session you want Godot to target with a stable server
+   address, for example:
+
+   ```bash
+   nvim --listen /tmp/godot.nvim
+   ```
+
+2. Install `nvr` and make sure it is available:
+
+   ```bash
+   which nvr
+   ```
+
+3. Configure the Godot addon Project Settings:
+   - `godotdev_nvim_node_copy/output/mode = neovim_remote`
+   - `godotdev_nvim_node_copy/output/neovim_server_address = /tmp/godot.nvim`
+   - `godotdev_nvim_node_copy/output/neovim_executable = /full/path/to/nvr`
+
+4. Optional on macOS:
+   - `godotdev_nvim_node_copy/output/focus_after_neovim_remote = true`
+   - `godotdev_nvim_node_copy/output/focus_application = ghostty`
+
+### Notes
+
+- Clipboard mode remains the default and most predictable workflow.
+- If remote insertion fails, the addon can fall back to the clipboard.
+- Inserted snippets end with a newline so repeated inserts do not stack on the
+  same line.
 
 ## Icon Import
 

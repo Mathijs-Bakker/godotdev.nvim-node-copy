@@ -68,18 +68,33 @@ Output settings:
 - `godotdev_nvim_node_copy/output/neovim_server_address`: the Neovim server address to target
 - `godotdev_nvim_node_copy/output/fallback_to_clipboard`: fall back to the clipboard if remote insertion fails
 
-Experimental `neovim_remote` mode inserts text at the current Neovim cursor. It
-is not drag-and-drop and works best when the target script is already open in
-Neovim. It uses `nvr` for remote insertion, so `nvr` must be installed and
-available in your `PATH`.
+## Experimental Neovim Insert Mode
 
-To use experimental direct insertion, start the Neovim editor server from
-`godotdev.nvim` and set `godotdev_nvim_node_copy/output/mode` to
-`neovim_remote`.
+`godotdev.nvim-node-copy` supports an experimental `neovim_remote` output mode.
 
-This is especially useful when you need to insert multiple nodes into the same
-file. With the current `godotdev.nvim` defaults, `gdscript-formatter
---reorder-code` can then reorganize inserted `@onready` snippets on save.
+Instead of only copying generated node snippets to the clipboard, the addon can
+send them directly to the current cursor position in an already open Neovim
+buffer through Neovim's editor server.
+
+This is experimental because it is not drag-and-drop. It is a cursor-based
+insertion workflow and depends on your Neovim server setup being correct.
+
+### Requirements
+
+To use `neovim_remote` mode:
+
+1. Start the Neovim session you want Godot to target with a stable server
+   address, for example `nvim --listen /tmp/godot.nvim`.
+2. Install `nvr` and make sure it is available in your `PATH`.
+3. Configure:
+   - `godotdev_nvim_node_copy/output/mode = neovim_remote`
+   - `godotdev_nvim_node_copy/output/neovim_server_address = /tmp/godot.nvim`
+   - `godotdev_nvim_node_copy/output/neovim_executable = /full/path/to/nvr`
+
+This mode works best when the target script is already open in Neovim and you
+need to insert multiple snippets into the same file. With the current
+`godotdev.nvim` defaults, `gdscript-formatter --reorder-code` can reorganize
+inserted `@onready` snippets on save.
 
 ## Repository
 
