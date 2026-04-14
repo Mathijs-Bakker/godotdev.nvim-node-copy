@@ -241,7 +241,11 @@ func _dollar_reference(node: Node) -> String:
 	if path == ".":
 		return "self"
 
-	return "$%s" % _path_with_leading_slash(path)
+	var normalized_path := _path_with_leading_slash(path)
+	if _requires_quoted_dollar_path(normalized_path):
+		return '$"%s"' % normalized_path
+
+	return "$%s" % normalized_path
 
 
 func _get_node_reference(node: Node) -> String:
@@ -272,6 +276,19 @@ func _path_with_leading_slash(path: String) -> String:
 		return path
 
 	return "/" + path
+
+
+func _requires_quoted_dollar_path(path: String) -> bool:
+	for i in path.length():
+		var ch := path.substr(i, 1)
+		var is_alpha := ch >= "a" and ch <= "z" or ch >= "A" and ch <= "Z"
+		var is_digit := ch >= "0" and ch <= "9"
+		if is_alpha or is_digit or ch == "_" or ch == "/":
+			continue
+
+		return true
+
+	return false
 
 
 func _csharp_property_snippet(node: Node) -> String:
