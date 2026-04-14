@@ -326,12 +326,13 @@ func _deliver_text(text: String) -> void:
 
 func _insert_into_neovim(text: String) -> bool:
 	var output: Array = []
-	var expression := _build_neovim_insert_expression(text)
+	var command := _build_neovim_insert_command(text)
 	var exit_code := OS.execute(_neovim_executable(), [
+		"--nostart",
 		"--servername",
 		_neovim_server_address(),
-		"--remote-expr",
-		expression,
+		"-c",
+		command,
 	], output, true)
 
 	if exit_code != 0:
@@ -345,10 +346,14 @@ func _insert_into_neovim(text: String) -> bool:
 	return true
 
 
-func _build_neovim_insert_expression(text: String) -> String:
-	var encoded_text := JSON.stringify(text)
-	var insert_expression := (
-		"local lines = vim.split(_A, '\\n', { plain = true }); "
+func _build_neovim_insert_command(text: String) -> String:
+	var text_literal := _lua_long_bracket_literal(text)
+	return (
+		"lua "
+		+ "local text = "
+		+ text_literal
+		+ "; "
+		+ "local lines = vim.split(text, '\\n', { plain = true }); "
 		+ "local line_count = #lines; "
 		+ "local win = vim.api.nvim_get_current_win(); "
 		+ "local buf = vim.api.nvim_win_get_buf(win); "
@@ -358,16 +363,19 @@ func _build_neovim_insert_expression(text: String) -> String:
 		+ "vim.api.nvim_buf_set_text(buf, row, col, row, col, lines); "
 		+ "local last_line = lines[line_count]; "
 		+ "local target_col = (line_count == 1 and col or 0) + #last_line; "
-		+ "vim.api.nvim_win_set_cursor(win, { row + line_count, target_col }); "
-		+ "return 'ok'"
+		+ "vim.api.nvim_win_set_cursor(win, { row + line_count, target_col })"
 	)
-	return (
-		"luaeval("
-		+ JSON.stringify(insert_expression)
-		+ ", "
-		+ encoded_text
-		+ ")"
-	)
+
+
+func _lua_long_bracket_literal(text: String) -> String:
+	var level := 0
+	var closing := "]" + "=".repeat(level) + "]"
+	while text.contains(closing):
+		level += 1
+		closing = "]" + "=".repeat(level) + "]"
+
+	var opening := "[" + "=".repeat(level) + "["
+	return opening + text + closing
 
 
 func _joined_output_suffix(output: Array) -> String:
