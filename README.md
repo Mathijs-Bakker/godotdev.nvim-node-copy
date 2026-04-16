@@ -196,6 +196,22 @@ To use `neovim_remote` mode:
   same line.
 - The remote insertion flow works on Linux and macOS with the same `nvr` plus
   `--listen` setup.
+- Windows is intended to work through a named pipe server address, but it has
+  not been verified in this repository yet.
+
+### Windows setup
+
+For Windows, start Neovim with a named pipe, for example:
+
+```bash
+nvim --listen \\\\.\\pipe\\godot.nvim
+```
+
+Then configure:
+
+- `godotdev_nvim_node_copy/output/mode = neovim_remote`
+- `godotdev_nvim_node_copy/output/neovim_server_address = \\\\.\\pipe\\godot.nvim`
+- `godotdev_nvim_node_copy/output/neovim_executable = /full/path/to/nvr.exe`
 
 ## Icon Import
 
