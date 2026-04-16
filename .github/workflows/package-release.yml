@@ -46,14 +46,22 @@ jobs:
         with:
           ref: ${{ steps.version.outputs.tag }}
 
+      - name: Verify plugin.cfg version
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          actual_version="$(sed -n 's/^version="\(.*\)"$/\1/p' addons/godotdev_nvim_node_copy/plugin.cfg)"
+          if [ "$actual_version" != "$VERSION" ]; then
+            echo "plugin.cfg version '$actual_version' does not match tag version '$VERSION'" >&2
+            exit 1
+          fi
+
       - name: Prepare release payload
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           mkdir -p dist/addons
           cp -R addons/godotdev_nvim_node_copy dist/addons/
-          perl -0pi -e 's/version="[^"]*"/version="$ENV{VERSION}"/' dist/addons/godotdev_nvim_node_copy/plugin.cfg
-          grep '^version=' dist/addons/godotdev_nvim_node_copy/plugin.cfg
           cd dist
           zip -r "godotdev_nvim_node_copy-${VERSION}.zip" addons
 
