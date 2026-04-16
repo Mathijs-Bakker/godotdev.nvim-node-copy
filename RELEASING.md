@@ -2,35 +2,33 @@
 
 This repository uses the version in `addons/godotdev_nvim_node_copy/plugin.cfg`
 as the release version that Godot users will see after installing from GitHub or
-the Asset Library.
+the Asset Library. The release workflow updates `plugin.cfg`, commits the bump to
+the default branch, creates the tag, and publishes the release artifact.
 
 ## Release flow
 
-1. Make sure your working tree is clean.
-2. Run `./scripts/prepare-release.sh 0.3.1` or `./scripts/prepare-release.sh 0.3.1 --push`.
-3. If you did not use `--push`, push the branch and the tag:
-   - `git push origin <branch>`
-   - `git push origin v0.3.1`
-4. Wait for GitHub Actions to run `Package Release`.
-5. Verify the GitHub release contains `godotdev_nvim_node_copy-0.3.1.zip`.
+1. Merge your release-ready changes into the default branch.
+2. In GitHub, open `Actions` and run `Release Addon`.
+3. Enter the release version, for example `0.3.3`.
+4. Wait for the workflow to finish.
+5. Verify the default branch contains the `plugin.cfg` bump commit.
+6. Verify the GitHub release contains `godotdev_nvim_node_copy-0.3.3.zip`.
 
-## What the script does
+## What the workflow does
 
 - updates `plugin.cfg`
 - creates a release commit
 - creates a `vX.Y.Z` tag
-- optionally pushes the branch and tag
+- pushes the default branch and tag
+- uploads the packaged addon zip to the GitHub release
 
 ## Safety checks
 
-- `scripts/prepare-release.sh` refuses to run with a dirty working tree.
-- `Package Release` fails if `plugin.cfg` does not match the tag version.
+- `Release Addon` rejects versions that do not look like `X.Y.Z`.
+- `Release Addon` fails if the target tag already exists.
 - `Validate Addon` checks semver formatting and the packaged addon layout on push
   and pull request.
 
 ## Example
 
-```bash
-./scripts/prepare-release.sh 0.3.1 --push
-```
-
+Run `Release Addon` with version `0.3.3`.
