@@ -1,14 +1,10 @@
-name: Package Release
+name: Release Addon
 
 on:
-  push:
-    tags:
-      - "v*"
-      - "[0-9]+.[0-9]+.[0-9]+"
   workflow_dispatch:
     inputs:
-      tag:
-        description: Tag to package, for example v0.3.1 or 0.3.1
+      version:
+        description: Release version, for example 0.3.3
         required: true
         type: string
 
@@ -16,49 +12,81 @@ permissions:
   contents: write
 
 jobs:
-  package-release:
+  release-addon:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Resolve tag and version
-        id: version
+      - name: Validate version input
+        id: release
         env:
-          INPUT_TAG: ${{ inputs.tag }}
-          REF_NAME: ${{ github.ref_name }}
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          tag="${REF_NAME:-$INPUT_TAG}"
-          if [ -z "$tag" ]; then
-            echo "No tag was provided." >&2
-            exit 1
-          fi
-
-          version="${tag#v}"
+          version="${INPUT_VERSION}"
           if [ -z "$version" ]; then
-            echo "Resolved version is empty." >&2
+            echo "No version was provided." >&2
             exit 1
           fi
 
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
+          case "$version" in
+            [0-9]*.[0-9]*.[0-9]*)
+              ;;
+            *)
+              echo "Version must look like 0.3.3" >&2
+              exit 1
+              ;;
+          esac
 
-      - name: Check out tagged source
+          tag="v$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Check out default branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ steps.version.outputs.tag }}
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
 
-      - name: Verify plugin.cfg version
+      - name: Ensure tag does not already exist
         env:
-          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.release.outputs.tag }}
         run: |
-          actual_version="$(sed -n 's/^version="\(.*\)"$/\1/p' addons/godotdev_nvim_node_copy/plugin.cfg)"
-          if [ "$actual_version" != "$VERSION" ]; then
-            echo "plugin.cfg version '$actual_version' does not match tag version '$VERSION'" >&2
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists." >&2
             exit 1
           fi
+
+      - name: Update plugin.cfg
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          perl -0pi -e 's/version="[^"]*"/version="$ENV{VERSION}"/' addons/godotdev_nvim_node_copy/plugin.cfg
+          actual_version="$(sed -n 's/^version="\(.*\)"$/\1/p' addons/godotdev_nvim_node_copy/plugin.cfg)"
+          if [ "$actual_version" != "$VERSION" ]; then
+            echo "plugin.cfg version update failed." >&2
+            exit 1
+          fi
+
+      - name: Commit release bump
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+          TAG: ${{ steps.release.outputs.tag }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add addons/godotdev_nvim_node_copy/plugin.cfg
+          if git diff --cached --quiet; then
+            echo "plugin.cfg is already set to $VERSION" >&2
+            exit 1
+          fi
+          git commit -m "chore: release $VERSION"
+          git tag "$TAG"
+          git push origin "HEAD:$DEFAULT_BRANCH"
+          git push origin "$TAG"
 
       - name: Prepare release payload
         env:
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ steps.release.outputs.version }}
         run: |
           mkdir -p dist/addons
           cp -R addons/godotdev_nvim_node_copy dist/addons/
@@ -68,6 +96,6 @@ jobs:
       - name: Create or update GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          files: dist/godotdev_nvim_node_copy-${{ steps.version.outputs.version }}.zip
+          tag_name: ${{ steps.release.outputs.tag }}
+          files: dist/godotdev_nvim_node_copy-${{ steps.release.outputs.version }}.zip
           generate_release_notes: true
