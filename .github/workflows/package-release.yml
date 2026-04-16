@@ -1,0 +1,65 @@
+name: Package Release
+
+on:
+  push:
+    tags:
+      - "v*"
+      - "[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag to package, for example v0.3.1 or 0.3.1
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  package-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Resolve tag and version
+        id: version
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          tag="${REF_NAME:-$INPUT_TAG}"
+          if [ -z "$tag" ]; then
+            echo "No tag was provided." >&2
+            exit 1
+          fi
+
+          version="${tag#v}"
+          if [ -z "$version" ]; then
+            echo "Resolved version is empty." >&2
+            exit 1
+          fi
+
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Check out tagged source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.version.outputs.tag }}
+
+      - name: Prepare release payload
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          mkdir -p dist/addons
+          cp -R addons/godotdev_nvim_node_copy dist/addons/
+          perl -0pi -e 's/version="[^"]*"/version="$ENV{VERSION}"/' dist/addons/godotdev_nvim_node_copy/plugin.cfg
+          grep '^version=' dist/addons/godotdev_nvim_node_copy/plugin.cfg
+          cd dist
+          zip -r "godotdev_nvim_node_copy-${VERSION}.zip" addons
+
+      - name: Create or update GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          files: dist/godotdev_nvim_node_copy-${{ steps.version.outputs.version }}.zip
+          generate_release_notes: true
