@@ -135,7 +135,7 @@ This controls which language-specific copy actions appear in:
 Output settings:
 - `godotdev_nvim_node_copy/output/mode`: `clipboard` or `neovim_remote`
 - `godotdev_nvim_node_copy/output/neovim_executable`: the executable used for remote insertion, default `nvr`
-- `godotdev_nvim_node_copy/output/neovim_server_address`: the Neovim server address to target, default `/tmp/godot.nvim` on macOS/Linux and `\\.\pipe\godot.nvim` on Windows
+- `godotdev_nvim_node_copy/output/neovim_server_address`: the Neovim server address to target, default `/tmp/godot.nvim` on Linux/macOS and `\\.\pipe\godot.nvim` on Windows
 - `godotdev_nvim_node_copy/output/fallback_to_clipboard`: if enabled, failed remote insertion falls back to the clipboard
 
 ## Experimental Neovim Insert Mode
@@ -188,16 +188,14 @@ To use `neovim_remote` mode:
    - `godotdev_nvim_node_copy/output/neovim_server_address = /tmp/godot.nvim`
    - `godotdev_nvim_node_copy/output/neovim_executable = /full/path/to/nvr`
 
-4. Optional on macOS:
-   - `godotdev_nvim_node_copy/output/focus_after_neovim_remote = true`
-   - `godotdev_nvim_node_copy/output/focus_application = ghostty`
-
 ### Notes
 
 - Clipboard mode remains the default and most predictable workflow.
 - If remote insertion fails, the addon can fall back to the clipboard.
 - Inserted snippets end with a newline so repeated inserts do not stack on the
   same line.
+- The remote insertion flow works on Linux and macOS with the same `nvr` plus
+  `--listen` setup.
 
 ## Icon Import
 
