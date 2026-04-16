@@ -210,3 +210,7 @@ To use `neovim_remote` mode:
 - Support `%UniqueNode` when appropriate
 - Add C# snippet variants
 - Let users choose snippet style in plugin settings
+
+## Releasing
+
+Release steps are documented in [RELEASING.md](RELEASING.md).
